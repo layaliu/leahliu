@@ -1,0 +1,386 @@
+{
+  "market_rent": 3500,
+  "min_acceptable_rent": 3300,
+  "concession_steps": [
+    50,
+    100,
+    150
+  ],
+  "overdue_days_levels": {
+    "level1": 3,
+    "level2": 7,
+    "level3": 14,
+    "level4": 30
+  },
+  "risk_score_weights": {
+    "on_time_rate": 0.4,
+    "overdue_count": 0.3,
+    "communication": 0.2,
+    "tenure_length": 0.1
+  },
+  "channels": {
+    "dingtalk": {
+      "enabled": true
+    },
+    "feishu": {
+      "enabled": true
+    },
+    "qq": {
+      "enabled": true
+    },
+    "telegram": {
+      "enabled": true
+    },
+    "whatsapp": {
+      "enabled": true
+    },
+    "instagram": {
+      "enabled": true
+    },
+    "discord": {
+      "enabled": true
+    },
+    "sms": {
+      "enabled": true
+    }
+  },
+  "privacy": {
+    "private_chat_only": true,
+    "disable_group_reminder": true
+  },
+  "care": {
+    "enabled": true,
+    "weather": {
+      "enabled": true,
+      "api_key": "your-weather-api-key",
+      "default_city": "北京"
+    },
+    "holidays": {
+      "enabled": true,
+      "holiday_template": "祝您{{holiday}}快乐！愿您度过美好的一天。",
+      "list": [
+        {
+          "name": "元旦",
+          "date": "01-01"
+        },
+        {
+          "name": "劳动节",
+          "date": "05-01"
+        },
+        {
+          "name": "国庆节",
+          "date": "10-01"
+        }
+      ]
+    },
+    "welcome": {
+      "enabled": true,
+      "template": "欢迎{{name}}入住！小区周边：地铁{{nearby_metro}}，公交{{nearby_bus}}，商场{{nearby_mall}}，药店{{nearby_pharmacy}}。有任何问题可随时联系我。"
+    },
+    "weekly_tips": {
+      "enabled": true,
+      "day_of_week": 1,
+      "template": "早安！本周周边信息：地铁{{nearby_metro}}，公交{{nearby_bus}}。如需帮助请回复。"
+    },
+    "birthday": {
+      "enabled": true,
+      "template": "生日快乐{{name}}！房东托我送上祝福，愿您新的一岁万事如意。"
+    }
+  },
+  "service": {
+    "enabled": true,
+    "ticket_store": "/home/admin/landlord-helper/evidence/repairs/",
+    "notify_user": "房东钉钉UserID",
+    "notify_channel": "dingtalk",
+    "auto_reminder": {
+      "enabled": true,
+      "interval_hours": 24,
+      "max_reminders": 3
+    },
+    "ticket_id_prefix": "R",
+    "categories": [
+      "停水",
+      "停电",
+      "维修",
+      "漏水",
+      "灯泡坏了",
+      "马桶堵塞",
+      "门锁坏了",
+      "噪音投诉",
+      "其他"
+    ]
+  },
+  "scheduler": {
+    "tasks": [
+      {
+        "cron": "0 8 * * *",
+        "action": "send_weather_forecast"
+      },
+      {
+        "cron": "0 9 * * *",
+        "action": "send_rent_reminders",
+        "params": {
+          "only_status": [
+            "未交"
+          ],
+          "template": "{{name}}您好，本月租金{{rent}}元已逾期{{days}}天，请及时处理。如有特殊情况请告知。"
+        }
+      },
+      {
+        "cron": "0 9 * * 1",
+        "action": "send_weekly_tips"
+      },
+      {
+        "cron": "0 9 * * *",
+        "action": "check_expiring_leases"
+      },
+      {
+        "cron": "0 9 * * *",
+        "action": "check_holidays_and_birthdays"
+      },
+      {
+        "cron": "0 10 * * *",
+        "action": "check_pending_tickets"
+      },
+      {
+        "cron": "0 21 * * *",
+        "action": "generate_daily_report",
+        "params": {
+          "template": "晚上好，今日催收：逾期={{overdue_list}}，待处理请求={{pending_list}}；今日工单={{ticket_total}}（待处理={{ticket_pending}}，处理中={{ticket_processing}}）；到期租约待处理={{renewal_pending}}。"
+        }
+      },
+      {
+        "cron": "0 9 * * 1",
+        "action": "generate_weekly_summary",
+        "params": {
+          "template": "收租周报：应收={{due}}，实收={{paid}}，未收={{unpaid}}，逾期分布={{overdue_dist}}，建议={{next_actions}}。"
+        }
+      },
+      {
+        "cron": "0 9 1 1,4,7,10 *",
+        "action": "generate_quarterly_report",
+        "params": {
+          "year": "current_year",
+          "quarter": "current_quarter"
+        }
+      },
+      {
+        "cron": "0 10 1 1 *",
+        "action": "generate_annual_report",
+        "params": {
+          "year": "previous_year"
+        }
+      },
+      {
+        "cron": "0 3 * * *",
+        "action": "auto_archive_departed_tenants",
+        "params": {
+          "days_after_end": 30
+        }
+      }
+    ]
+  },
+  "audit": {
+    "require_landlord_approval_for_concession": true,
+    "pending_queue_file": "evidence/pending_requests.json"
+  },
+  "billing": {
+    "property_fee_default_monthly": 200,
+    "late_fee_default_rule": "20元/天"
+  },
+  "evidence": {
+    "base_dir": "/home/admin/landlord-helper/evidence/",
+    "archive_dir": "/archive/tenants/",
+    "retain_original_after_archive": false,
+    "auto_backup": true,
+    "backup_cron": "0 2 * * 0",
+    "auto_delete_backups": false,
+    "backup": {
+      "enabled": true,
+      "schedule": "0 2 * * 0",
+      "destination": "/backup/evidence/",
+      "encrypt": true
+    }
+  },
+  "renewal": {
+    "enabled": true,
+    "advance_days": 30,
+    "remind_landlord_template": "租户{{name}}的租约将于{{end_date}}到期，是否续租？如需续租请回复“续租 {{name}} 新租金”，如不续租请回复“不续租 {{name}}”。",
+    "first_contact_template": "您好{{name}}，您的租约将于{{end_date}}到期。房东计划将租金调整为{{new_rent}}元/月，您是否考虑续租？请告知您的意向。",
+    "followup_template": "您好{{name}}，关于续租事宜，房东表示{{message}}，您的意见是？",
+    "landlord_confirm_template": "租户{{name}}已接受续租条件（新租金{{rent}}元/月）。请确认并生成新租约。",
+    "renewal_notes_file": "/home/admin/landlord-helper/evidence/renewals.json"
+  },
+  "reporting": {
+    "enabled": true,
+    "quarterly": {
+      "enabled": true,
+      "delivery_day": 1,
+      "delivery_month": [
+        1,
+        4,
+        7,
+        10
+      ],
+      "delivery_time": "09:00"
+    },
+    "annual": {
+      "enabled": true,
+      "delivery_day": 1,
+      "delivery_month": 1,
+      "delivery_time": "10:00"
+    },
+    "charts_output_dir": "/home/admin/landlord-helper/evidence/reports/charts/",
+    "report_archive_dir": "/home/admin/landlord-helper/evidence/reports/archive/"
+  },
+  "area": {
+    "default_unit": "平方米",
+    "units": [
+      "平方米",
+      "平方英尺",
+      "坪"
+    ],
+    "unit_to_sqm": {
+      "平方米": 1,
+      "平方英尺": 0.092903,
+      "坪": 3.30579
+    },
+    "enable_in_reports": true
+  },
+  "contract_scan": {
+    "enabled": true,
+    "ocr_engine": "tesseract",
+    "tesseract_lang": "chi_sim",
+    "preprocess": true,
+    "save_contract": true,
+    "contracts_dir": "/home/admin/landlord-helper/evidence/contracts/",
+    "temp_dir": "/tmp/contract_scan/"
+  },
+  "personality": {
+    "enabled": true,
+    "default_tf": "通用",
+    "default_ie": "通用",
+    "templates": {
+      "reminder": {
+        "T": "{{name}}您好，本月租金{{rent}}元已逾期{{days}}天。根据合同约定，逾期将产生滞纳金，请尽快处理。",
+        "F": "{{name}}您好呀，知道您平时忙，可能一时忘记了。本月租金{{rent}}元已逾期{{days}}天，方便时处理一下，如有困难可随时沟通。",
+        "通用": "{{name}}您好，本月租金{{rent}}元已逾期{{days}}天，请及时处理。"
+      },
+      "negotiation_start": {
+        "T": "房东报价依据市场数据（同区域均价{{market_rent}}元）。若需优惠，可考虑延长租期交换条件。",
+        "F": "房东很重视与您的长期合作，也理解您的压力，愿意在合理范围内一起商量方案。",
+        "通用": "房东已收到您的降价请求，目前建议方案如下。"
+      },
+      "follow_up": {
+        "I": "您可以先考虑一下，想好后随时回复我。",
+        "E": "您觉得这个方案怎么样？我可以马上帮您继续沟通。",
+        "通用": "请告知您的决定。"
+      },
+      "combo": {
+        "T+I": "我整理了关键数据和可选方案，您先看一下，方便时回复。",
+        "T+E": "给您三个可选方案：A/B/C，您现在可直接选一个。",
+        "F+I": "我理解您的想法，我们可以慢慢沟通，您不急着马上决定。",
+        "F+E": "咱们一起把方案敲定好，您看哪个更合适我就立刻帮您推进。"
+      }
+    }
+  },
+  "multi_agent": {
+    "agents": {
+      "landlord-core": {
+        "workspace": "agents/landlord-core",
+        "soul": "你是房东助手核心Agent，负责租客管理、统计分析",
+        "sandbox": "restricted"
+      },
+      "rent-collector": {
+        "workspace": "agents/rent-collector",
+        "soul": "你只负责催租，不允许执行其他操作",
+        "sandbox": "restricted"
+      },
+      "care-agent": {
+        "workspace": "agents/care-agent",
+        "soul": "你只负责租户关怀、生日问候",
+        "sandbox": "restricted"
+      }
+    },
+    "router": {
+      "rules": [
+        {
+          "intent": "催租",
+          "target": "rent-collector"
+        },
+        {
+          "intent": "关怀",
+          "target": "care-agent"
+        },
+        {
+          "default": "landlord-core"
+        }
+      ]
+    }
+  },
+  "monitoring": {
+    "enabled": true,
+    "memory_threshold": 80,
+    "cpu_threshold": 85,
+    "disk_threshold": 85,
+    "notify_channel": "dingtalk",
+    "check_interval_seconds": 60
+  },
+  "network_security": {
+    "management_port": 18789,
+    "allow_cidrs": [
+      "10.0.0.0/8"
+    ],
+    "deny_public_access": true,
+    "tailscale": {
+      "enabled": true,
+      "mode": "serve",
+      "command": "openclaw gateway --tailscale serve"
+    }
+  },
+  "openclaw_logging": {
+    "level": "info",
+    "encoding": "json",
+    "output_paths": [
+      "stdout",
+      "/var/log/openclaw/openclaw.log"
+    ],
+    "rotation": {
+      "max_size_mb": 100,
+      "max_age_days": 30,
+      "max_backups": 10,
+      "compress": true
+    }
+  },
+  "token_optimization": {
+    "enabled": true,
+    "official_baseline": {
+      "memory_max_tokens": 2000,
+      "context_compression": {
+        "enabled": true,
+        "mode": "lossless"
+      },
+      "vision_enabled": false,
+      "filesystem_allowed_paths": [
+        "/home/admin/landlord-helper/"
+      ]
+    },
+    "viking": {
+      "enabled": false,
+      "repo": "https://github.com/adoresever/AGI_Ananans.git",
+      "subdir": "26.2.21openclaw-viking",
+      "expected_token_reduction_percent": "60-80"
+    },
+    "qmd": {
+      "enabled": false,
+      "provider": "qmd",
+      "qmd_path": "/home/admin/.openclaw/skills/qmd/qmd.py",
+      "max_context_chunks": 5,
+      "expected_memory_token_reduction_percent": "80-90"
+    },
+    "multi_agent_isolation": {
+      "enabled": true,
+      "expected_extra_reduction_percent": "30+"
+    }
+  }
+}
