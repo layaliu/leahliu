@@ -48,9 +48,16 @@ chmod +x "$SKILL_DIR/preprocess_image.py"
 echo "✅ 复制技能文件"
 
 # 4. 生成加密密钥（如果不存在）
-ENCRYPTION_KEY=$(openssl rand -base64 32)
-echo "export ENCRYPTION_KEY='$ENCRYPTION_KEY'" >> "$HOME/.bashrc"
-echo "✅ 生成加密密钥（已保存到.bashrc）"
+if [ -n "${ENCRYPTION_KEY:-}" ]; then
+  echo "✅ 检测到已存在的 ENCRYPTION_KEY，复用当前环境变量"
+elif grep -qE "^[[:space:]]*export[[:space:]]+ENCRYPTION_KEY=" "$HOME/.bashrc"; then
+  ENCRYPTION_KEY=$(grep -E "^[[:space:]]*export[[:space:]]+ENCRYPTION_KEY=" "$HOME/.bashrc" | tail -n1 | sed -E "s/^[[:space:]]*export[[:space:]]+ENCRYPTION_KEY=['\"]?([^'\"]*)['\"]?.*$/\1/")
+  echo "✅ 检测到 .bashrc 中已存在 ENCRYPTION_KEY，复用该密钥"
+else
+  ENCRYPTION_KEY=$(openssl rand -base64 32)
+  echo "export ENCRYPTION_KEY='$ENCRYPTION_KEY'" >> "$HOME/.bashrc"
+  echo "✅ 生成加密密钥（已保存到 .bashrc）"
+fi
 
 # 4.1 多平台凭证占位（按需配置）
 if ! grep -q "WHATSAPP_ACCESS_TOKEN" "$HOME/.bashrc"; then
@@ -148,4 +155,3 @@ if [ "${ENABLE_TOKEN_OPTIMIZATION:-false}" = "true" ]; then
 else
   echo "ℹ️ 如需启用 token 优化，请执行：ENABLE_TOKEN_OPTIMIZATION=true ./install.sh"
 fi
-
